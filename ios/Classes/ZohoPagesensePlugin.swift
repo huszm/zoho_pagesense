@@ -1,6 +1,6 @@
 import Flutter
 import UIKit
-import PageSenseSDK
+import PageSenseFramework
 
 public class ZohoPagesensePlugin: NSObject, FlutterPlugin {
 
