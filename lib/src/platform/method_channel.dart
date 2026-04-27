@@ -1,47 +1,66 @@
 import 'package:flutter/services.dart';
 
 import '../models/config.dart';
+import '../models/result.dart';
 import 'platform_interface.dart';
 
 class PageSenseMethodChannel extends PageSensePlatform {
   static const MethodChannel _channel = MethodChannel('zoho_pagesense');
 
-  @override
-  Future<void> init(String appId, PageSenseDataCenter dataCenter) async {
-    await _channel.invokeMethod<void>('init', {
-      'appId': appId,
-      'dataCenter': dataCenter.value,
-    });
+  /// Invokes [method] with optional [args] and converts the outcome to a
+  /// [PageSenseResult]. A [PlatformException] from the native side becomes a
+  /// [PageSenseFailure]; any other exception is re-thrown unchanged.
+  Future<PageSenseResult> _invoke(
+    String method, [
+    Map<String, Object?>? args,
+  ]) async {
+    try {
+      await _channel.invokeMethod<void>(method, args);
+      return const PageSenseSuccess();
+    } on PlatformException catch (e) {
+      return PageSenseFailure(code: e.code, message: e.message);
+    }
   }
 
   @override
-  Future<void> setUserId(String? userId) async {
-    await _channel.invokeMethod<void>('setUserId', {'userId': userId});
+  Future<PageSenseResult> init(String appId, PageSenseDataCenter dataCenter) {
+    return _invoke('init', {'appId': appId, 'dataCenter': dataCenter.value});
   }
 
   @override
-  Future<void> trackScreen(String name, Map<String, Object>? properties) async {
-    await _channel.invokeMethod<void>('trackScreen', {
+  Future<PageSenseResult> setUserId(String? userId) {
+    return _invoke('setUserId', {'userId': userId});
+  }
+
+  @override
+  Future<PageSenseResult> trackScreen(
+    String name,
+    Map<String, Object>? properties,
+  ) {
+    return _invoke('trackScreen', {
       'name': name,
       if (properties != null) 'properties': properties,
     });
   }
 
   @override
-  Future<void> trackEvent(String name, Map<String, Object>? properties) async {
-    await _channel.invokeMethod<void>('trackEvent', {
+  Future<PageSenseResult> trackEvent(
+    String name,
+    Map<String, Object>? properties,
+  ) {
+    return _invoke('trackEvent', {
       'name': name,
       if (properties != null) 'properties': properties,
     });
   }
 
   @override
-  Future<void> trackPurchase(
+  Future<PageSenseResult> trackPurchase(
     double amount,
     String currency,
     String? productId,
-  ) async {
-    await _channel.invokeMethod<void>('trackPurchase', {
+  ) {
+    return _invoke('trackPurchase', {
       'amount': amount,
       'currency': currency,
       if (productId != null) 'productId': productId,
@@ -49,14 +68,12 @@ class PageSenseMethodChannel extends PageSensePlatform {
   }
 
   @override
-  Future<void> setTrackingEnabled(bool enabled) async {
-    await _channel.invokeMethod<void>('setTrackingEnabled', {
-      'enabled': enabled,
-    });
+  Future<PageSenseResult> setTrackingEnabled(bool enabled) {
+    return _invoke('setTrackingEnabled', {'enabled': enabled});
   }
 
   @override
-  Future<void> clearAllData() async {
-    await _channel.invokeMethod<void>('clearAllData');
+  Future<PageSenseResult> clearAllData() {
+    return _invoke('clearAllData');
   }
 }
