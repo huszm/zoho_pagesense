@@ -66,8 +66,9 @@ class ZohoPagesensePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 
                 // Trigger lifecycle events for the current activity since PageSense 
                 // was initialized after the activity was already created and resumed.
-                activity?.let { act ->
-                    val callbacks = PageSense.INSTANCE.activityLifecycleCallbacks
+                val act = activity
+                if (act != null) {
+                    val callbacks = PageSense.activityLifecycleCallbacks
                     callbacks?.onActivityCreated(act, null)
                     callbacks?.onActivityStarted(act)
                     callbacks?.onActivityResumed(act)
