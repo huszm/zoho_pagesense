@@ -15,10 +15,6 @@ Supports sessions, installs, custom events, screen tracking, and retention.
   s.dependency 'ZohoPageSenseSDK'
   s.platform         = :ios, '13.0'
 
-  s.pod_target_xcconfig = {
-    'DEFINES_MODULE' => 'YES',
-    'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'arm64'
-  }
-  s.user_target_xcconfig = { 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'arm64' }
+  s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES' }
   s.swift_version = '5.0'
 end

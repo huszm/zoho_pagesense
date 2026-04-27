@@ -1,6 +1,8 @@
 import Flutter
 import UIKit
+#if !targetEnvironment(simulator)
 import PageSenseFramework
+#endif
 
 public class ZohoPagesensePlugin: NSObject, FlutterPlugin {
 
@@ -39,20 +41,22 @@ public class ZohoPagesensePlugin: NSObject, FlutterPlugin {
             result(FlutterError(code: "INVALID_APP_ID", message: "appId must not be empty.", details: nil))
             return
         }
-        // dataCenter is encoded in the appId by the Zoho dashboard.
-        // PageSenseSDK reads ZPS_APP_ID from Info.plist; we override it at runtime.
+        #if !targetEnvironment(simulator)
         PageSense.initWith(appId: appId)
+        #endif
         result(nil)
     }
 
     private func handleSetUserId(call: FlutterMethodCall, result: @escaping FlutterResult) {
         let args = call.arguments as? [String: Any]
         let userId = args?["userId"] as? String
+        #if !targetEnvironment(simulator)
         var profile: [String: String] = [:]
         if let uid = userId {
             profile["email"] = uid
         }
         PageSense.trackUser(userProfile: profile)
+        #endif
         result(nil)
     }
 }
