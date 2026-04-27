@@ -1,6 +1,5 @@
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
-import '../models/config.dart';
 import '../models/result.dart';
 
 abstract class PageSensePlatform extends PlatformInterface {
@@ -20,7 +19,7 @@ abstract class PageSensePlatform extends PlatformInterface {
     _instance = value;
   }
 
-  Future<PageSenseResult> init(String appId, PageSenseDataCenter dataCenter);
+  Future<PageSenseResult> init(String appId);
 
   Future<PageSenseResult> setUserId(String? userId);
 

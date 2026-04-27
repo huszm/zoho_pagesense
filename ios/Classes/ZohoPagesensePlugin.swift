@@ -38,7 +38,10 @@ public class ZohoPagesensePlugin: NSObject, FlutterPlugin {
             result(FlutterError(code: "INVALID_APP_ID", message: "appId must not be empty.", details: nil))
             return
         }
+        // Attempt to inject appId via UserDefaults before integrate() in case
+        // the SDK reads it from there as a fallback to Info.plist "appID" key.
         UserDefaults.standard.set(appId, forKey: "appID")
+        UserDefaults.standard.synchronize()
         PageSense.integrate()
         result(nil)
     }

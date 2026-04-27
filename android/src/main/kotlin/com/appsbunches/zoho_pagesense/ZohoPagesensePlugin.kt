@@ -2,6 +2,7 @@ package com.appsbunches.zoho_pagesense
 
 import android.app.Application
 import com.zoho.pagesense.android.PageSense
+import com.zoho.pagesense.android.eventtracking.UserInfo
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -52,8 +53,7 @@ class ZohoPagesensePlugin : FlutterPlugin, MethodCallHandler {
     private fun handleSetUserId(call: MethodCall, result: Result) {
         val userId = call.argument<String?>("userId")
         try {
-            val userInfo = PageSense.getUserInfoInstance()
-            userInfo?.setEmail(userId)
+            UserInfo.setEmail(userId)
             PageSense.addUserInfo()
             result.success(null)
         } catch (e: Exception) {
@@ -70,7 +70,7 @@ class ZohoPagesensePlugin : FlutterPlugin, MethodCallHandler {
         try {
             @Suppress("UNCHECKED_CAST")
             val properties = call.argument<Map<String, Any>>("properties")
-            PageSense.addEvent(name, HashMap(properties ?: emptyMap()))
+            PageSense.addEvent(name, HashMap<String?, Any?>(properties ?: emptyMap()))
             result.success(null)
         } catch (e: Exception) {
             result.error("TRACK_EVENT_FAILED", e.message, null)
@@ -86,7 +86,7 @@ class ZohoPagesensePlugin : FlutterPlugin, MethodCallHandler {
         try {
             @Suppress("UNCHECKED_CAST")
             val properties = call.argument<Map<String, Any>>("properties")
-            val props = HashMap<String, Any>(properties ?: emptyMap())
+            val props = HashMap<String?, Any?>(properties ?: emptyMap())
             props["screen_name"] = name
             PageSense.addEvent("screen_view", props)
             result.success(null)
@@ -102,7 +102,7 @@ class ZohoPagesensePlugin : FlutterPlugin, MethodCallHandler {
         try {
             // trackRevenue expects an integer amount in minor units (cents).
             PageSense.trackRevenue((amount * 100).toInt())
-            val props = hashMapOf<String, Any>("amount" to amount, "currency" to currency)
+            val props = hashMapOf<String?, Any?>("amount" to amount, "currency" to currency)
             if (productId != null) props["productId"] = productId
             PageSense.addEvent("purchase", props)
             result.success(null)

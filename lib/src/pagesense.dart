@@ -1,9 +1,7 @@
-import 'models/config.dart';
 import 'models/result.dart';
 import 'platform/method_channel.dart';
 import 'platform/platform_interface.dart';
 
-export 'models/config.dart';
 export 'models/result.dart';
 export 'analytics/route_observer.dart';
 
@@ -35,12 +33,9 @@ class PageSense {
   ///
   /// Returns [PageSenseSuccess] on success. On failure the singleton is NOT
   /// set, so [isInitialized] remains `false`.
-  static Future<PageSenseResult> init({
-    required String appId,
-    PageSenseDataCenter dataCenter = PageSenseDataCenter.sa,
-  }) async {
+  static Future<PageSenseResult> init({required String appId}) async {
     PageSensePlatform.instance = PageSenseMethodChannel();
-    final result = await PageSensePlatform.instance.init(appId, dataCenter);
+    final result = await PageSensePlatform.instance.init(appId);
     if (result.isSuccess) _instance = PageSense._();
     return result;
   }

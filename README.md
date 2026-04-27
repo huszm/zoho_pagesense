@@ -26,7 +26,7 @@ No additional setup required.
 
 ### iOS
 
-The plugin depends on `ZohoPageSenseSDK` via CocoaPods. After `flutter pub get`, run:
+The plugin depends on `PageSenseSDK` via CocoaPods. After `flutter pub get`, run:
 
 ```sh
 cd ios && pod install
@@ -34,9 +34,18 @@ cd ios && pod install
 
 Minimum deployment target: **iOS 13.0**.
 
+**Required — add your App ID to `ios/Runner/Info.plist`:**
+
+```xml
+<key>ZPS_APP_ID</key>
+<string>YOUR_APP_ID_HERE</string>
+```
+
+The iOS SDK reads the App ID from `Info.plist` at startup. Without this entry the SDK initialises silently without credentials and no events are sent. The `appId` parameter passed to `PageSense.init()` is used by Android; iOS uses the `Info.plist` value.
+
 ## Initialization
 
-Call `PageSense.init` once in `main.dart` before `runApp`, passing the App ID from your Zoho PageSense dashboard:
+Call `PageSense.init` once in `main.dart` before `runApp`:
 
 ```dart
 import 'package:zoho_pagesense/zoho_pagesense.dart';
@@ -44,22 +53,17 @@ import 'package:zoho_pagesense/zoho_pagesense.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await PageSense.init(appId: 'YOUR_APP_ID');
+  final result = await PageSense.init(appId: 'YOUR_APP_ID');
+  if (!result.isSuccess) {
+    // handle initialisation failure
+  }
 
   runApp(const MyApp());
 }
 ```
 
-### Data center
-
-The default data center is Saudi Arabia (`SA`). Pass `dataCenter` to target a different region:
-
-```dart
-await PageSense.init(
-  appId: 'YOUR_APP_ID',
-  dataCenter: PageSenseDataCenter.us, // us, eu, in_, au, sa
-);
-```
+> **Android** uses the `appId` argument directly.
+> **iOS** reads the App ID from `Info.plist` (`ZPS_APP_ID` key) — see setup above.
 
 ### User identity
 

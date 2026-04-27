@@ -1,6 +1,5 @@
 import 'package:flutter/services.dart';
 
-import '../models/config.dart';
 import '../models/result.dart';
 import 'platform_interface.dart';
 
@@ -23,8 +22,8 @@ class PageSenseMethodChannel extends PageSensePlatform {
   }
 
   @override
-  Future<PageSenseResult> init(String appId, PageSenseDataCenter dataCenter) {
-    return _invoke('init', {'appId': appId, 'dataCenter': dataCenter.value});
+  Future<PageSenseResult> init(String appId) {
+    return _invoke('init', {'appId': appId});
   }
 
   @override
