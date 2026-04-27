@@ -8,11 +8,31 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
+import io.flutter.embedding.engine.plugins.activity.ActivityAware
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
+import android.app.Activity
 
-class ZohoPagesensePlugin : FlutterPlugin, MethodCallHandler {
+class ZohoPagesensePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
 
     private lateinit var channel: MethodChannel
     private var application: Application? = null
+    private var activity: Activity? = null
+
+    override fun onAttachedToActivity(binding: ActivityPluginBinding) {
+        activity = binding.activity
+    }
+
+    override fun onDetachedFromActivityForConfigChanges() {
+        activity = null
+    }
+
+    override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
+        activity = binding.activity
+    }
+
+    override fun onDetachedFromActivity() {
+        activity = null
+    }
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         application = binding.applicationContext as? Application
@@ -43,6 +63,15 @@ class ZohoPagesensePlugin : FlutterPlugin, MethodCallHandler {
             val app = application
             if (app != null) {
                 PageSense.init(app, appId)
+                
+                // Trigger lifecycle events for the current activity since PageSense 
+                // was initialized after the activity was already created and resumed.
+                activity?.let { act ->
+                    val callbacks = PageSense.INSTANCE.activityLifecycleCallbacks
+                    callbacks?.onActivityCreated(act, null)
+                    callbacks?.onActivityStarted(act)
+                    callbacks?.onActivityResumed(act)
+                }
             }
             result.success(null)
         } catch (e: Exception) {

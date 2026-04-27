@@ -1,6 +1,5 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:zoho_pagesense/src/models/config.dart';
 import 'package:zoho_pagesense/src/platform/method_channel.dart';
 
 void main() {
@@ -26,12 +25,11 @@ void main() {
   });
 
   test('init sends correct arguments', () async {
-    await platform.init('my-app-id', PageSenseDataCenter.sa);
+    await platform.init('my-app-id');
 
     expect(log, hasLength(1));
     expect(log.first.method, 'init');
     expect(log.first.arguments['appId'], 'my-app-id');
-    expect(log.first.arguments['dataCenter'], 'SA');
   });
 
   test('setUserId sends userId', () async {

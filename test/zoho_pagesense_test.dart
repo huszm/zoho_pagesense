@@ -4,44 +4,42 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:zoho_pagesense/zoho_pagesense.dart';
 
 import 'package:zoho_pagesense/src/platform/platform_interface.dart';
-import 'package:zoho_pagesense/src/models/config.dart';
 
 class _MockPageSensePlatform
     with MockPlatformInterfaceMixin
     implements PageSensePlatform {
   String? lastAppId;
-  PageSenseDataCenter? lastDataCenter;
 
   @override
-  Future<void> init(String appId, PageSenseDataCenter dataCenter) async {
+  Future<PageSenseResult> init(String appId) async {
     lastAppId = appId;
-    lastDataCenter = dataCenter;
+    return const PageSenseSuccess();
   }
 
   @override
-  Future<void> setUserId(String? userId) async {}
+  Future<PageSenseResult> setUserId(String? userId) async => const PageSenseSuccess();
 
   @override
-  Future<void> trackScreen(
+  Future<PageSenseResult> trackScreen(
     String name,
     Map<String, Object>? properties,
-  ) async {}
+  ) async => const PageSenseSuccess();
 
   @override
-  Future<void> trackEvent(String name, Map<String, Object>? properties) async {}
+  Future<PageSenseResult> trackEvent(String name, Map<String, Object>? properties) async => const PageSenseSuccess();
 
   @override
-  Future<void> trackPurchase(
+  Future<PageSenseResult> trackPurchase(
     double amount,
     String currency,
     String? productId,
-  ) async {}
+  ) async => const PageSenseSuccess();
 
   @override
-  Future<void> setTrackingEnabled(bool enabled) async {}
+  Future<PageSenseResult> setTrackingEnabled(bool enabled) async => const PageSenseSuccess();
 
   @override
-  Future<void> clearAllData() async {}
+  Future<PageSenseResult> clearAllData() async => const PageSenseSuccess();
 }
 
 void main() {
@@ -55,7 +53,7 @@ void main() {
       PageSensePlatform.instance = mock;
     });
 
-    test('passes appId and dataCenter to platform', () async {
+    test('passes appId to platform', () async {
       const channel = MethodChannel('zoho_pagesense');
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(channel, (call) async => null);
@@ -63,27 +61,12 @@ void main() {
       PageSensePlatform.instance = mock;
       await PageSensePlatform.instance.init(
         'test-app-id',
-        PageSenseDataCenter.sa,
       );
 
       expect(mock.lastAppId, 'test-app-id');
-      expect(mock.lastDataCenter, PageSenseDataCenter.sa);
 
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(channel, null);
-    });
-
-    test('default dataCenter is sa', () {
-      expect(PageSenseDataCenter.sa.value, 'SA');
-    });
-
-    test('all dataCenter values map correctly', () {
-      expect(PageSenseDataCenter.us.value, 'US');
-      expect(PageSenseDataCenter.eu.value, 'EU');
-      // ignore: constant_identifier_names
-      expect(PageSenseDataCenter.in_.value, 'IN');
-      expect(PageSenseDataCenter.au.value, 'AU');
-      expect(PageSenseDataCenter.sa.value, 'SA');
     });
   });
 }

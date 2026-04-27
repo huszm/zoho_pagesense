@@ -6,7 +6,6 @@ Future<void> main() async {
 
   await PageSense.init(
     appId: 'YOUR_APP_ID_HERE',
-    dataCenter: PageSenseDataCenter.sa,
   );
 
   runApp(const MyApp());

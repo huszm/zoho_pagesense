@@ -14,7 +14,6 @@ void main() {
     await expectLater(
       PageSense.init(
         appId: 'test-app-id',
-        dataCenter: PageSenseDataCenter.sa,
       ),
       completes,
     );

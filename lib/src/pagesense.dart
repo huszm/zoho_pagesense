@@ -33,7 +33,9 @@ class PageSense {
   ///
   /// Returns [PageSenseSuccess] on success. On failure the singleton is NOT
   /// set, so [isInitialized] remains `false`.
-  static Future<PageSenseResult> init({required String appId}) async {
+  static Future<PageSenseResult> init({
+    required String appId,
+  }) async {
     PageSensePlatform.instance = PageSenseMethodChannel();
     final result = await PageSensePlatform.instance.init(appId);
     if (result.isSuccess) _instance = PageSense._();
