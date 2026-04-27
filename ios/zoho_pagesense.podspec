@@ -12,7 +12,7 @@ Supports sessions, installs, custom events, screen tracking, and retention.
   s.source           = { :path => '.' }
   s.source_files     = 'Classes/**/*'
   s.dependency 'Flutter'
-  s.dependency 'ZohoPageSenseSDK'
+  s.dependency 'PageSenseSDK'
   s.platform         = :ios, '13.0'
 
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES' }

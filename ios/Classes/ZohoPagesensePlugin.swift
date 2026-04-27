@@ -1,8 +1,6 @@
 import Flutter
 import UIKit
-#if !targetEnvironment(simulator)
 import PageSenseFramework
-#endif
 
 public class ZohoPagesensePlugin: NSObject, FlutterPlugin {
 
@@ -41,22 +39,20 @@ public class ZohoPagesensePlugin: NSObject, FlutterPlugin {
             result(FlutterError(code: "INVALID_APP_ID", message: "appId must not be empty.", details: nil))
             return
         }
-        #if !targetEnvironment(simulator)
-        PageSense.initWith(appId: appId)
-        #endif
+        // The SDK reads appID from UserDefaults (falling back to Info.plist key "appID").
+        UserDefaults.standard.set(appId, forKey: "appID")
+        PageSense.integrate()
         result(nil)
     }
 
     private func handleSetUserId(call: FlutterMethodCall, result: @escaping FlutterResult) {
         let args = call.arguments as? [String: Any]
         let userId = args?["userId"] as? String
-        #if !targetEnvironment(simulator)
         var profile: [String: String] = [:]
         if let uid = userId {
             profile["email"] = uid
         }
         PageSense.trackUser(userProfile: profile)
-        #endif
         result(nil)
     }
 }
