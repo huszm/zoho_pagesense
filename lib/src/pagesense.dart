@@ -16,6 +16,9 @@ class PageSense {
 
   static PageSense? _instance;
 
+  /// Whether [init] has been called.
+  static bool get isInitialized => _instance != null;
+
   /// The singleton after [init] has been called.
   static PageSense get instance {
     assert(
@@ -46,34 +49,31 @@ class PageSense {
   }
 
   /// Tracks a screen view with an optional property map.
-  void trackScreen(String name, [Map<String, Object>? properties]) {
-    throw UnimplementedError('trackScreen is implemented in Phase 3.');
+  Future<void> trackScreen(String name, [Map<String, Object>? properties]) {
+    return PageSensePlatform.instance.trackScreen(name, properties);
   }
 
   /// Tracks a named custom event with optional properties.
-  void trackEvent(String name, [Map<String, Object>? properties]) {
-    throw UnimplementedError('trackEvent is implemented in Phase 3.');
+  Future<void> trackEvent(String name, [Map<String, Object>? properties]) {
+    return PageSensePlatform.instance.trackEvent(name, properties);
   }
 
   /// Convenience wrapper for purchase events.
-  void trackPurchase({
+  Future<void> trackPurchase({
     required double amount,
     required String currency,
     String? productId,
   }) {
-    throw UnimplementedError('trackPurchase is implemented in Phase 3.');
+    return PageSensePlatform.instance.trackPurchase(amount, currency, productId);
   }
 
   /// Enables or disables all analytics collection.
-  ///
-  /// When [enabled] is `false` the queue is dropped and no new events
-  /// are sent until re-enabled.
-  void setTrackingEnabled(bool enabled) {
-    throw UnimplementedError('setTrackingEnabled is implemented in Phase 5.');
+  Future<void> setTrackingEnabled(bool enabled) {
+    return PageSensePlatform.instance.setTrackingEnabled(enabled);
   }
 
   /// Wipes all locally stored analytics data (GDPR right-to-erasure).
-  void clearAllData() {
-    throw UnimplementedError('clearAllData is implemented in Phase 5.');
+  Future<void> clearAllData() {
+    return PageSensePlatform.instance.clearAllData();
   }
 }

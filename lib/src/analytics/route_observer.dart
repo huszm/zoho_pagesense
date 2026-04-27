@@ -1,5 +1,7 @@
 import 'package:flutter/widgets.dart';
 
+import '../pagesense.dart';
+
 /// A [NavigatorObserver] that automatically calls [PageSense.trackScreen]
 /// on every route push.
 ///
@@ -23,15 +25,9 @@ class PageSenseRouteObserver extends RouteObserver<PageRoute<dynamic>> {
   }
 
   void _trackRoute(Route<dynamic> route) {
-    // Phase 3 will wire this to PageSense.instance.trackScreen().
-    // Stub intentionally left empty — no crash on null route names.
     final name = route.settings.name;
     if (name == null || name.isEmpty) return;
-    // ignore: avoid_print
-    assert(() {
-      // ignore: avoid_print
-      print('[PageSense] route: $name');
-      return true;
-    }());
+    if (!PageSense.isInitialized) return;
+    PageSense.instance.trackScreen(name);
   }
 }

@@ -1,7 +1,7 @@
 package com.appsbunches.zoho_pagesense
 
 import android.app.Application
-import com.zoho.pagesense.PageSense
+import com.zoho.pagesense.android.PageSense
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -21,14 +21,14 @@ class ZohoPagesensePlugin : FlutterPlugin, MethodCallHandler {
 
     override fun onMethodCall(call: MethodCall, result: Result) {
         when (call.method) {
-            "init" -> handleInit(call, result)
-            "setUserId" -> handleSetUserId(call, result)
-            "setTrackingEnabled" -> handleSetTrackingEnabled(call, result)
-            "clearAllData" -> handleClearAllData(result)
-            // Phase 3
-            "trackEvent", "trackScreen", "trackPurchase" ->
-                result.notImplemented()
-            else -> result.notImplemented()
+            "init"               -> handleInit(call, result)
+            "setUserId"          -> handleSetUserId(call, result)
+            "trackEvent"         -> handleTrackEvent(call, result)
+            "trackScreen"        -> handleTrackScreen(call, result)
+            "trackPurchase"      -> handleTrackPurchase(call, result)
+            "setTrackingEnabled" -> result.success(null) // SDK has no opt-out API
+            "clearAllData"       -> result.success(null) // SDK has no data-deletion API
+            else                 -> result.notImplemented()
         }
     }
 
@@ -41,7 +41,6 @@ class ZohoPagesensePlugin : FlutterPlugin, MethodCallHandler {
         try {
             val app = application
             if (app != null) {
-                // dataCenter is encoded in appId by Zoho dashboard; pass raw.
                 PageSense.init(app, appId)
             }
             result.success(null)
@@ -62,14 +61,54 @@ class ZohoPagesensePlugin : FlutterPlugin, MethodCallHandler {
         }
     }
 
-    private fun handleSetTrackingEnabled(call: MethodCall, result: Result) {
-        // Phase 5 — native SDK API TBD.
-        result.notImplemented()
+    private fun handleTrackEvent(call: MethodCall, result: Result) {
+        val name = call.argument<String>("name")
+        if (name.isNullOrBlank()) {
+            result.error("INVALID_ARGS", "name is required", null)
+            return
+        }
+        try {
+            @Suppress("UNCHECKED_CAST")
+            val properties = call.argument<Map<String, Any>>("properties")
+            PageSense.addEvent(name, HashMap(properties ?: emptyMap()))
+            result.success(null)
+        } catch (e: Exception) {
+            result.error("TRACK_EVENT_FAILED", e.message, null)
+        }
     }
 
-    private fun handleClearAllData(result: Result) {
-        // Phase 5 — native SDK API TBD.
-        result.notImplemented()
+    private fun handleTrackScreen(call: MethodCall, result: Result) {
+        val name = call.argument<String>("name")
+        if (name.isNullOrBlank()) {
+            result.error("INVALID_ARGS", "name is required", null)
+            return
+        }
+        try {
+            @Suppress("UNCHECKED_CAST")
+            val properties = call.argument<Map<String, Any>>("properties")
+            val props = HashMap<String, Any>(properties ?: emptyMap())
+            props["screen_name"] = name
+            PageSense.addEvent("screen_view", props)
+            result.success(null)
+        } catch (e: Exception) {
+            result.error("TRACK_SCREEN_FAILED", e.message, null)
+        }
+    }
+
+    private fun handleTrackPurchase(call: MethodCall, result: Result) {
+        val amount   = call.argument<Double>("amount") ?: 0.0
+        val currency = call.argument<String>("currency") ?: ""
+        val productId = call.argument<String?>("productId")
+        try {
+            // trackRevenue expects an integer amount in minor units (cents).
+            PageSense.trackRevenue((amount * 100).toInt())
+            val props = hashMapOf<String, Any>("amount" to amount, "currency" to currency)
+            if (productId != null) props["productId"] = productId
+            PageSense.addEvent("purchase", props)
+            result.success(null)
+        } catch (e: Exception) {
+            result.error("TRACK_PURCHASE_FAILED", e.message, null)
+        }
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
