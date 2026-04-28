@@ -52,7 +52,7 @@ class PageSense {
   /// Tracks a screen view with an optional property map.
   Future<PageSenseResult> trackScreen(
     String name, [
-    Map<String, Object>? properties,
+    Map<String, dynamic>? properties,
   ]) {
     return PageSensePlatform.instance.trackScreen(name, properties);
   }
@@ -60,7 +60,7 @@ class PageSense {
   /// Tracks a named custom event with optional properties.
   Future<PageSenseResult> trackEvent(
     String name, [
-    Map<String, Object>? properties,
+    Map<String, dynamic>? properties,
   ]) {
     return PageSensePlatform.instance.trackEvent(name, properties);
   }

@@ -23,9 +23,9 @@ abstract class PageSensePlatform extends PlatformInterface {
 
   Future<PageSenseResult> setUserId(String? userId);
 
-  Future<PageSenseResult> trackScreen(String name, Map<String, Object>? properties);
+  Future<PageSenseResult> trackScreen(String name, Map<String, dynamic>? properties);
 
-  Future<PageSenseResult> trackEvent(String name, Map<String, Object>? properties);
+  Future<PageSenseResult> trackEvent(String name, Map<String, dynamic>? properties);
 
   Future<PageSenseResult> trackPurchase(double amount, String currency, String? productId);
 

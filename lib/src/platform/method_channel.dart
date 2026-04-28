@@ -34,7 +34,7 @@ class PageSenseMethodChannel extends PageSensePlatform {
   @override
   Future<PageSenseResult> trackScreen(
     String name,
-    Map<String, Object>? properties,
+    Map<String, dynamic>? properties,
   ) {
     return _invoke('trackScreen', {
       'name': name,
@@ -45,7 +45,7 @@ class PageSenseMethodChannel extends PageSensePlatform {
   @override
   Future<PageSenseResult> trackEvent(
     String name,
-    Map<String, Object>? properties,
+    Map<String, dynamic>? properties,
   ) {
     return _invoke('trackEvent', {
       'name': name,

@@ -1,6 +1,47 @@
 import Flutter
 import UIKit
 import PageSenseFramework
+import ObjectiveC.runtime
+
+// MARK: - Bundle injection
+
+// After method_exchangeImplementations the "infoDictionary" selector runs our
+// code below, and "ps_infoDictionary" runs the original implementation.
+// @objc dynamic forces ObjC message dispatch so the recursive call inside
+// ps_infoDictionary correctly reaches the swapped-in original, not itself.
+extension Bundle {
+    @objc dynamic func ps_infoDictionary() -> [String: Any]? {
+        guard var dict = self.ps_infoDictionary() else { return nil }
+        if self === Bundle.main {
+            if let injected = PageSenseBundleInjector.appId {
+                dict["ZPS_APP_ID"] = injected
+            }
+        }
+        return dict
+    }
+}
+
+private enum PageSenseBundleInjector {
+    static var appId: String?
+    private static var installed = false
+    private static let lock = NSLock()
+
+    static func install(appId: String) {
+        lock.lock()
+        defer { lock.unlock() }
+        self.appId = appId
+        guard !installed else { return }
+        installed = true
+        let cls: AnyClass = Bundle.self
+        guard
+            let original    = class_getInstanceMethod(cls, NSSelectorFromString("infoDictionary")),
+            let replacement = class_getInstanceMethod(cls, #selector(Bundle.ps_infoDictionary))
+        else { return }
+        method_exchangeImplementations(original, replacement)
+    }
+}
+
+// MARK: - Plugin
 
 public class ZohoPagesensePlugin: NSObject, FlutterPlugin {
 
@@ -21,7 +62,7 @@ public class ZohoPagesensePlugin: NSObject, FlutterPlugin {
         case "trackScreen":     handleTrackScreen(call: call, result: result)
         case "trackPurchase":   handleTrackPurchase(call: call, result: result)
         case "setTrackingEnabled", "clearAllData":
-            result(nil) // Underlying SDK has no opt-out / data-deletion API.
+            result(nil)
         default:
             result(FlutterMethodNotImplemented)
         }
@@ -38,10 +79,9 @@ public class ZohoPagesensePlugin: NSObject, FlutterPlugin {
             result(FlutterError(code: "INVALID_APP_ID", message: "appId must not be empty.", details: nil))
             return
         }
-        // Attempt to inject appId via UserDefaults before integrate() in case
-        // the SDK reads it from there as a fallback to Info.plist "appID" key.
-        UserDefaults.standard.set(appId, forKey: "appID")
-        UserDefaults.standard.synchronize()
+        // Inject appId into Bundle.main.infoDictionary so integrate() picks it up
+        // regardless of whether Info.plist contains the key.
+        PageSenseBundleInjector.install(appId: appId)
         PageSense.integrate()
         result(nil)
     }
