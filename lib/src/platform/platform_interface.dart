@@ -32,4 +32,10 @@ abstract class PageSensePlatform extends PlatformInterface {
   Future<PageSenseResult> setTrackingEnabled(bool enabled);
 
   Future<PageSenseResult> clearAllData();
+
+  Future<PageSenseResult> setPushToken(String token);
+
+  Future<bool> isPageSensePushNotification(Map<String, String> data);
+
+  Future<PageSenseResult> showPushNotification(Map<String, String> data, int notificationId);
 }

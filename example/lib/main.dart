@@ -107,6 +107,13 @@ class _HomePageState extends State<HomePage> {
             ),
           )),
 
+          _section(context, 'Push notifications'),
+          _btn('Register push token (demo)', () async => _show(
+            // In a real app pass the FCM token from FirebaseMessaging.getToken()
+            // or the APNs token from FirebaseMessaging.getAPNSToken() on iOS.
+            await PageSense.instance.setPushToken('demo_token_replace_me'),
+          )),
+
           _section(context, 'Privacy'),
           _btn('Disable tracking', () async =>
               _show(await PageSense.instance.setTrackingEnabled(false))),

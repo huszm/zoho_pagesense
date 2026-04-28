@@ -3,6 +3,24 @@ import UIKit
 import PageSenseFramework
 import ObjectiveC.runtime
 
+// MARK: - Hex → Data helper
+
+private extension String {
+    func hexToData() -> Data? {
+        let hex = self.replacingOccurrences(of: " ", with: "")
+        guard hex.count % 2 == 0 else { return nil }
+        var data = Data(capacity: hex.count / 2)
+        var index = hex.startIndex
+        while index < hex.endIndex {
+            let next = hex.index(index, offsetBy: 2)
+            guard let byte = UInt8(hex[index..<next], radix: 16) else { return nil }
+            data.append(byte)
+            index = next
+        }
+        return data
+    }
+}
+
 // MARK: - Bundle injection
 
 // After method_exchangeImplementations the "infoDictionary" selector runs our
@@ -63,6 +81,12 @@ public class ZohoPagesensePlugin: NSObject, FlutterPlugin {
         case "trackPurchase":   handleTrackPurchase(call: call, result: result)
         case "setTrackingEnabled", "clearAllData":
             result(nil)
+        case "setPushToken":
+            handleSetPushToken(call: call, result: result)
+        case "isPageSensePushNotification":
+            result(false) // handled natively in AppDelegate on iOS
+        case "showPushNotification":
+            result(nil)   // handled natively in AppDelegate on iOS
         default:
             result(FlutterMethodNotImplemented)
         }
@@ -83,6 +107,25 @@ public class ZohoPagesensePlugin: NSObject, FlutterPlugin {
         // regardless of whether Info.plist contains the key.
         PageSenseBundleInjector.install(appId: appId)
         PageSense.integrate()
+        result(nil)
+    }
+
+    // MARK: - Push notifications
+
+    private func handleSetPushToken(call: FlutterMethodCall, result: @escaping FlutterResult) {
+        guard
+            let args = call.arguments as? [String: Any],
+            let tokenHex = args["token"] as? String,
+            !tokenHex.isEmpty
+        else {
+            result(FlutterError(code: "INVALID_ARGS", message: "token is required", details: nil))
+            return
+        }
+        guard let tokenData = tokenHex.hexToData() else {
+            result(FlutterError(code: "INVALID_TOKEN", message: "token must be a valid hex string", details: nil))
+            return
+        }
+        PageSense.setPushToken(deviceToken: tokenData)
         result(nil)
     }
 

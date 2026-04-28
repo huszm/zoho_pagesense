@@ -83,4 +83,34 @@ class PageSense {
   Future<PageSenseResult> clearAllData() {
     return PageSensePlatform.instance.clearAllData();
   }
+
+  /// Registers the device push token with Zoho PageSense.
+  ///
+  /// On **Android** pass the FCM registration token string.
+  /// On **iOS** pass the APNs token as a lowercase hex string
+  /// (e.g. from `FirebaseMessaging.instance.getAPNSToken()`).
+  Future<PageSenseResult> setPushToken(String token) {
+    return PageSensePlatform.instance.setPushToken(token);
+  }
+
+  /// Returns `true` if the FCM message [data] originated from Zoho PageSense.
+  ///
+  /// Always returns `false` on iOS — iOS notifications are handled natively
+  /// in `AppDelegate` via `PageSense.trackPushNotificationReceived` and
+  /// `PageSense.handleNotification`.
+  Future<bool> isPageSensePushNotification(Map<String, String> data) {
+    return PageSensePlatform.instance.isPageSensePushNotification(data);
+  }
+
+  /// Displays a PageSense push notification from FCM message [data].
+  ///
+  /// Only call this after [isPageSensePushNotification] returns `true`.
+  /// [notificationId] is an arbitrary unique int used to update or cancel the
+  /// notification later. Always returns [PageSenseSuccess] on iOS (no-op).
+  Future<PageSenseResult> showPushNotification(
+    Map<String, String> data, {
+    int notificationId = 0,
+  }) {
+    return PageSensePlatform.instance.showPushNotification(data, notificationId);
+  }
 }

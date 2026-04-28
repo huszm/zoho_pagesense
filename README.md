@@ -142,6 +142,103 @@ await PageSense.instance.trackPurchase(
 );
 ```
 
+### Push notifications
+
+Push notifications require completing the FCM (Android) and APNs (iOS) setup in the Zoho PageSense dashboard before any code changes.
+
+#### 1 — Register the device token
+
+Call `setPushToken` after obtaining the token from your push notification library:
+
+```dart
+import 'package:firebase_messaging/firebase_messaging.dart';
+
+// Android: FCM token
+final fcmToken = await FirebaseMessaging.instance.getToken();
+if (fcmToken != null) {
+  await PageSense.instance.setPushToken(fcmToken);
+}
+
+// iOS: APNs token (hex string)
+final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+if (apnsToken != null) {
+  await PageSense.instance.setPushToken(apnsToken);
+}
+```
+
+#### 2 — Handle incoming messages (Android)
+
+When a background FCM message arrives, check whether it came from PageSense and display it:
+
+```dart
+FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+  final data = message.data.map((k, v) => MapEntry(k, v.toString()));
+
+  if (await PageSense.instance.isPageSensePushNotification(data)) {
+    await PageSense.instance.showPushNotification(data, notificationId: message.hashCode);
+  }
+});
+```
+
+For background and terminated states, wire up a top-level handler:
+
+```dart
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  final data = message.data.map((k, v) => MapEntry(k, v.toString()));
+  if (await PageSense.instance.isPageSensePushNotification(data)) {
+    await PageSense.instance.showPushNotification(data, notificationId: message.hashCode);
+  }
+}
+
+void main() {
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  // ...
+}
+```
+
+#### 3 — Handle notifications (iOS — native setup required)
+
+On iOS, notification tracking and tap handling require native `UNNotificationCenter` objects that cannot be passed through a method channel. Add the following to your `ios/Runner/AppDelegate.swift`:
+
+```swift
+import UserNotifications
+import PageSenseFramework
+
+@UIApplicationMain
+class AppDelegate: FlutterAppDelegate, UNUserNotificationCenterDelegate {
+
+  override func application(
+    _ application: UIApplication,
+    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+  ) -> Bool {
+    UNUserNotificationCenter.current().delegate = self
+    GeneratedPluginRegistrant.register(with: self)
+    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+
+  // Track notification display
+  func userNotificationCenter(
+    _ center: UNUserNotificationCenter,
+    willPresent notification: UNNotification,
+    withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+  ) {
+    PageSense.trackPushNotificationReceived(notificationContent: notification.request.content)
+    completionHandler([.banner, .sound])
+  }
+
+  // Track notification tap
+  func userNotificationCenter(
+    _ center: UNUserNotificationCenter,
+    didReceive response: UNNotificationResponse,
+    withCompletionHandler completionHandler: @escaping () -> Void
+  ) {
+    PageSense.handleNotification(response: response)
+    completionHandler()
+  }
+}
+```
+
 ### Privacy controls
 
 ```dart
@@ -166,4 +263,7 @@ await PageSense.instance.clearAllData();
 | `instance.trackPurchase(amount:currency:productId:)` | Convenience wrapper for purchase events. |
 | `instance.setTrackingEnabled(bool)` | Enables or disables analytics collection. |
 | `instance.clearAllData()` | Wipes all locally stored analytics data. |
+| `instance.setPushToken(String)` | Registers FCM (Android) or APNs hex token (iOS) with PageSense. |
+| `instance.isPageSensePushNotification(Map)` | Android: returns `true` if the FCM data map is from PageSense. |
+| `instance.showPushNotification(Map, {notificationId})` | Android: displays the PageSense notification. |
 | `PageSense.isInitialized` | `true` after a successful `init` call. |

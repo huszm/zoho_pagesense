@@ -1,6 +1,7 @@
 package com.appsbunches.zoho_pagesense
 
 import android.app.Application
+import com.zoho.pagesense.android.PSNotification
 import com.zoho.pagesense.android.PageSense
 import com.zoho.pagesense.android.eventtracking.UserInfo
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -47,9 +48,12 @@ class ZohoPagesensePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             "trackEvent"         -> handleTrackEvent(call, result)
             "trackScreen"        -> handleTrackScreen(call, result)
             "trackPurchase"      -> handleTrackPurchase(call, result)
-            "setTrackingEnabled" -> result.success(null) // SDK has no opt-out API
-            "clearAllData"       -> result.success(null) // SDK has no data-deletion API
-            else                 -> result.notImplemented()
+            "setTrackingEnabled"          -> result.success(null)
+            "clearAllData"               -> result.success(null)
+            "setPushToken"               -> handleSetPushToken(call, result)
+            "isPageSensePushNotification" -> handleIsPageSensePush(call, result)
+            "showPushNotification"        -> handleShowPushNotification(call, result)
+            else                          -> result.notImplemented()
         }
     }
 
@@ -138,6 +142,42 @@ class ZohoPagesensePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             result.success(null)
         } catch (e: Exception) {
             result.error("TRACK_PURCHASE_FAILED", e.message, null)
+        }
+    }
+
+    private fun handleSetPushToken(call: MethodCall, result: Result) {
+        val token = call.argument<String>("token")
+        if (token.isNullOrBlank()) {
+            result.error("INVALID_ARGS", "token is required", null)
+            return
+        }
+        try {
+            PSNotification.sendDeviceToken(token)
+            result.success(null)
+        } catch (e: Exception) {
+            result.error("SET_PUSH_TOKEN_FAILED", e.message, null)
+        }
+    }
+
+    private fun handleIsPageSensePush(call: MethodCall, result: Result) {
+        @Suppress("UNCHECKED_CAST")
+        val data = call.argument<Map<String, String>>("data") ?: emptyMap()
+        try {
+            result.success(PSNotification.isFromPageSensePlatform(HashMap(data)))
+        } catch (e: Exception) {
+            result.success(false)
+        }
+    }
+
+    private fun handleShowPushNotification(call: MethodCall, result: Result) {
+        @Suppress("UNCHECKED_CAST")
+        val data = call.argument<Map<String, String>>("data") ?: emptyMap()
+        val notificationId = call.argument<Int>("notificationId") ?: 0
+        try {
+            PSNotification.showNotification(HashMap(data), notificationId)
+            result.success(null)
+        } catch (e: Exception) {
+            result.error("SHOW_NOTIFICATION_FAILED", e.message, null)
         }
     }
 

@@ -75,4 +75,33 @@ class PageSenseMethodChannel extends PageSensePlatform {
   Future<PageSenseResult> clearAllData() {
     return _invoke('clearAllData');
   }
+
+  @override
+  Future<PageSenseResult> setPushToken(String token) {
+    return _invoke('setPushToken', {'token': token});
+  }
+
+  @override
+  Future<bool> isPageSensePushNotification(Map<String, String> data) async {
+    try {
+      final result = await _channel.invokeMethod<bool>(
+        'isPageSensePushNotification',
+        {'data': data},
+      );
+      return result ?? false;
+    } on PlatformException {
+      return false;
+    }
+  }
+
+  @override
+  Future<PageSenseResult> showPushNotification(
+    Map<String, String> data,
+    int notificationId,
+  ) {
+    return _invoke('showPushNotification', {
+      'data': data,
+      'notificationId': notificationId,
+    });
+  }
 }
