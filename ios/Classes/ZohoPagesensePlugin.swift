@@ -76,6 +76,7 @@ public class ZohoPagesensePlugin: NSObject, FlutterPlugin {
         switch call.method {
         case "init":            handleInit(call: call, result: result)
         case "setUserId":       handleSetUserId(call: call, result: result)
+        case "setUserInfo":     handleSetUserInfo(call: call, result: result)
         case "trackEvent":      handleTrackEvent(call: call, result: result)
         case "trackScreen":     handleTrackScreen(call: call, result: result)
         case "trackPurchase":   handleTrackPurchase(call: call, result: result)
@@ -94,10 +95,6 @@ public class ZohoPagesensePlugin: NSObject, FlutterPlugin {
 
     // MARK: - Init
 
-    /// UserDefaults key used to persist the appId so AppDelegate can call
-    /// integrate() early on subsequent launches.
-    static let appIdDefaultsKey = "zoho_pagesense_app_id"
-
     private func handleInit(call: FlutterMethodCall, result: @escaping FlutterResult) {
         guard
             let args = call.arguments as? [String: Any],
@@ -107,9 +104,6 @@ public class ZohoPagesensePlugin: NSObject, FlutterPlugin {
             result(FlutterError(code: "INVALID_APP_ID", message: "appId must not be empty.", details: nil))
             return
         }
-        // Persist for early init on next launch.
-        UserDefaults.standard.set(appId, forKey: ZohoPagesensePlugin.appIdDefaultsKey)
-
         // Inject appId into Bundle.main.infoDictionary so integrate() picks it up
         // regardless of whether Info.plist contains the key.
         PageSenseBundleInjector.install(appId: appId)
@@ -143,6 +137,16 @@ public class ZohoPagesensePlugin: NSObject, FlutterPlugin {
         let userId = args?["userId"] as? String
         var profile: [String: String] = [:]
         if let uid = userId { profile["email"] = uid }
+        PageSense.trackUser(userProfile: profile)
+        result(nil)
+    }
+
+    private func handleSetUserInfo(call: FlutterMethodCall, result: @escaping FlutterResult) {
+        let args = call.arguments as? [String: Any] ?? [:]
+        var profile: [String: String] = [:]
+        if let name  = args["name"]  as? String { profile["firstname"] = name }
+        if let email = args["email"] as? String { profile["email"]     = email }
+        if let phone = args["phone"] as? String { profile["phone"]     = phone }
         PageSense.trackUser(userProfile: profile)
         result(nil)
     }

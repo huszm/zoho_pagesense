@@ -45,6 +45,7 @@ class ZohoPagesensePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         when (call.method) {
             "init"               -> handleInit(call, result)
             "setUserId"          -> handleSetUserId(call, result)
+            "setUserInfo"        -> handleSetUserInfo(call, result)
             "trackEvent"         -> handleTrackEvent(call, result)
             "trackScreen"        -> handleTrackScreen(call, result)
             "trackPurchase"      -> handleTrackPurchase(call, result)
@@ -92,6 +93,18 @@ class ZohoPagesensePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             result.success(null)
         } catch (e: Exception) {
             result.error("SET_USER_FAILED", e.message, null)
+        }
+    }
+
+    private fun handleSetUserInfo(call: MethodCall, result: Result) {
+        try {
+            call.argument<String?>("name")?.let  { UserInfo.setFirstname(it) }
+            call.argument<String?>("email")?.let { UserInfo.setEmail(it) }
+            call.argument<String?>("phone")?.let { UserInfo.setPhone(it) }
+            PageSense.addUserInfo()
+            result.success(null)
+        } catch (e: Exception) {
+            result.error("SET_USER_INFO_FAILED", e.message, null)
         }
     }
 

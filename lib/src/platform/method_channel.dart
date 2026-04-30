@@ -32,6 +32,19 @@ class PageSenseMethodChannel extends PageSensePlatform {
   }
 
   @override
+  Future<PageSenseResult> setUserInfo({
+    String? name,
+    String? email,
+    String? phone,
+  }) {
+    return _invoke('setUserInfo', {
+      if (name != null) 'name': name,
+      if (email != null) 'email': email,
+      if (phone != null) 'phone': phone,
+    });
+  }
+
+  @override
   Future<PageSenseResult> trackScreen(
     String name,
     Map<String, dynamic>? properties,

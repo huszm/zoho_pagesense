@@ -49,6 +49,22 @@ class PageSense {
     return PageSensePlatform.instance.setUserId(userId);
   }
 
+  /// Sends user profile information to Zoho PageSense.
+  ///
+  /// Call this after login/signup to enable user-level targeting and analytics.
+  /// All parameters are optional — pass only the fields you have.
+  Future<PageSenseResult> setUserInfo({
+    String? name,
+    String? email,
+    String? phone,
+  }) {
+    return PageSensePlatform.instance.setUserInfo(
+      name: name,
+      email: email,
+      phone: phone,
+    );
+  }
+
   /// Tracks a screen view with an optional property map.
   Future<PageSenseResult> trackScreen(
     String name, [
