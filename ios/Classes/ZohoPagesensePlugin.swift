@@ -94,6 +94,10 @@ public class ZohoPagesensePlugin: NSObject, FlutterPlugin {
 
     // MARK: - Init
 
+    /// UserDefaults key used to persist the appId so AppDelegate can call
+    /// integrate() early on subsequent launches.
+    static let appIdDefaultsKey = "zoho_pagesense_app_id"
+
     private func handleInit(call: FlutterMethodCall, result: @escaping FlutterResult) {
         guard
             let args = call.arguments as? [String: Any],
@@ -103,6 +107,9 @@ public class ZohoPagesensePlugin: NSObject, FlutterPlugin {
             result(FlutterError(code: "INVALID_APP_ID", message: "appId must not be empty.", details: nil))
             return
         }
+        // Persist for early init on next launch.
+        UserDefaults.standard.set(appId, forKey: ZohoPagesensePlugin.appIdDefaultsKey)
+
         // Inject appId into Bundle.main.infoDictionary so integrate() picks it up
         // regardless of whether Info.plist contains the key.
         PageSenseBundleInjector.install(appId: appId)
