@@ -36,11 +36,13 @@ class PageSenseMethodChannel extends PageSensePlatform {
     String? name,
     String? email,
     String? phone,
+    bool pushOptIn = true,
   }) {
     return _invoke('setUserInfo', {
       if (name != null) 'name': name,
       if (email != null) 'email': email,
       if (phone != null) 'phone': phone,
+      'pushOptIn': pushOptIn,
     });
   }
 

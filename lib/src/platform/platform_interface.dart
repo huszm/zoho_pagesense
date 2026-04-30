@@ -27,6 +27,7 @@ abstract class PageSensePlatform extends PlatformInterface {
     String? name,
     String? email,
     String? phone,
+    bool pushOptIn = true,
   });
 
   Future<PageSenseResult> trackScreen(String name, Map<String, dynamic>? properties);

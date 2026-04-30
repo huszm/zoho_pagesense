@@ -57,11 +57,13 @@ class PageSense {
     String? name,
     String? email,
     String? phone,
+    bool pushOptIn = true,
   }) {
     return PageSensePlatform.instance.setUserInfo(
       name: name,
       email: email,
       phone: phone,
+      pushOptIn: pushOptIn,
     );
   }
 

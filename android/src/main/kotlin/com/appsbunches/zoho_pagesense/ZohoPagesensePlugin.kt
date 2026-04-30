@@ -101,6 +101,8 @@ class ZohoPagesensePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             call.argument<String?>("name")?.let  { UserInfo.setFirstname(it) }
             call.argument<String?>("email")?.let { UserInfo.setEmail(it) }
             call.argument<String?>("phone")?.let { UserInfo.setPhone(it) }
+            val pushOptIn = call.argument<Boolean>("pushOptIn") ?: true
+            UserInfo.setPushOptIn(pushOptIn)
             PageSense.addUserInfo()
             result.success(null)
         } catch (e: Exception) {
