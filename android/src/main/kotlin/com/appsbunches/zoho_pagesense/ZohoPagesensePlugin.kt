@@ -187,9 +187,11 @@ class ZohoPagesensePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private fun handleShowPushNotification(call: MethodCall, result: Result) {
         @Suppress("UNCHECKED_CAST")
         val data = call.argument<Map<String, String>>("data") ?: emptyMap()
-        val notificationId = call.argument<Int>("notificationId") ?: 0
         try {
-            PSNotification.showNotification(HashMap(data), notificationId)
+            // Zoho SDK's showNotification expects (Map<String, String>, Int iconResourceId)
+            // It does NOT take a notification ID. We must pass a valid drawable resource.
+            val iconResId = application?.applicationInfo?.icon ?: android.R.drawable.sym_def_app_icon
+            PSNotification.showNotification(HashMap(data), iconResId)
             result.success(null)
         } catch (e: Exception) {
             result.error("SHOW_NOTIFICATION_FAILED", e.message, null)
