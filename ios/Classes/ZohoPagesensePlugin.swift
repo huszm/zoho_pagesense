@@ -63,6 +63,10 @@ private enum PageSenseBundleInjector {
 
 public class ZohoPagesensePlugin: NSObject, FlutterPlugin {
 
+    // Raw APNs token received before PageSense.integrate() is called.
+    private static var pendingDeviceToken: Data?
+    private static var isInitialized = false
+
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(
             name: "zoho_pagesense",
@@ -70,6 +74,22 @@ public class ZohoPagesensePlugin: NSObject, FlutterPlugin {
         )
         let instance = ZohoPagesensePlugin()
         registrar.addMethodCallDelegate(instance, channel: channel)
+        // Receive raw APNs device token from iOS before any hex conversion.
+        registrar.addApplicationDelegate(instance)
+    }
+
+    // Flutter routes didRegisterForRemoteNotificationsWithDeviceToken to every
+    // plugin that calls addApplicationDelegate. We get the raw Data bytes that
+    // APNs issued — no hex conversion required.
+    public func application(
+        _ application: UIApplication,
+        didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
+    ) {
+        if ZohoPagesensePlugin.isInitialized {
+            PageSense.setPushToken(deviceToken: deviceToken)
+        } else {
+            ZohoPagesensePlugin.pendingDeviceToken = deviceToken
+        }
     }
 
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -108,6 +128,12 @@ public class ZohoPagesensePlugin: NSObject, FlutterPlugin {
         // regardless of whether Info.plist contains the key.
         PageSenseBundleInjector.install(appId: appId)
         PageSense.integrate()
+        ZohoPagesensePlugin.isInitialized = true
+        // Register any APNs token that arrived before init completed.
+        if let token = ZohoPagesensePlugin.pendingDeviceToken {
+            PageSense.setPushToken(deviceToken: token)
+            ZohoPagesensePlugin.pendingDeviceToken = nil
+        }
         result(nil)
     }
 
