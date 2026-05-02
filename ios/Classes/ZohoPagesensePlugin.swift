@@ -61,11 +61,13 @@ private enum PageSenseBundleInjector {
 
 // MARK: - Plugin
 
+private let kAPNSTokenKey = "ps_apns_token"
+
 public class ZohoPagesensePlugin: NSObject, FlutterPlugin {
 
-    // Raw APNs token received before PageSense.integrate() is called.
-    private static var pendingDeviceToken: Data?
-    private static var isInitialized = false
+    /// True after PageSense.integrate() has been called.
+    /// AppDelegate reads this to decide whether to call PageSense.setPushToken immediately.
+    public private(set) static var isIntegrated = false
 
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(
@@ -74,21 +76,15 @@ public class ZohoPagesensePlugin: NSObject, FlutterPlugin {
         )
         let instance = ZohoPagesensePlugin()
         registrar.addMethodCallDelegate(instance, channel: channel)
-        // Receive raw APNs device token from iOS before any hex conversion.
-        registrar.addApplicationDelegate(instance)
     }
 
-    // Flutter routes didRegisterForRemoteNotificationsWithDeviceToken to every
-    // plugin that calls addApplicationDelegate. We get the raw Data bytes that
-    // APNs issued — no hex conversion required.
-    public func application(
-        _ application: UIApplication,
-        didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
-    ) {
-        if ZohoPagesensePlugin.isInitialized {
+    /// Called by AppDelegate.didRegisterForRemoteNotificationsWithDeviceToken with the
+    /// raw APNs device token bytes. Persists to UserDefaults and, if PageSense is already
+    /// integrated, registers immediately.
+    public static func apnsTokenReceived(_ deviceToken: Data) {
+        UserDefaults.standard.set(deviceToken, forKey: kAPNSTokenKey)
+        if isIntegrated {
             PageSense.setPushToken(deviceToken: deviceToken)
-        } else {
-            ZohoPagesensePlugin.pendingDeviceToken = deviceToken
         }
     }
 
@@ -128,11 +124,10 @@ public class ZohoPagesensePlugin: NSObject, FlutterPlugin {
         // regardless of whether Info.plist contains the key.
         PageSenseBundleInjector.install(appId: appId)
         PageSense.integrate()
-        ZohoPagesensePlugin.isInitialized = true
-        // Register any APNs token that arrived before init completed.
-        if let token = ZohoPagesensePlugin.pendingDeviceToken {
+        ZohoPagesensePlugin.isIntegrated = true
+        // Register the APNs token that AppDelegate stored before init completed.
+        if let token = UserDefaults.standard.data(forKey: kAPNSTokenKey) {
             PageSense.setPushToken(deviceToken: token)
-            ZohoPagesensePlugin.pendingDeviceToken = nil
         }
         result(nil)
     }
