@@ -78,15 +78,6 @@ public class ZohoPagesensePlugin: NSObject, FlutterPlugin {
         registrar.addMethodCallDelegate(instance, channel: channel)
     }
 
-    /// Called by AppDelegate.didRegisterForRemoteNotificationsWithDeviceToken with the
-    /// raw APNs device token bytes. Persists to UserDefaults and, if PageSense is already
-    /// integrated, registers immediately.
-    public static func apnsTokenReceived(_ deviceToken: Data) {
-        UserDefaults.standard.set(deviceToken, forKey: kAPNSTokenKey)
-        if isIntegrated {
-            PageSense.setPushToken(deviceToken: deviceToken)
-        }
-    }
 
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         switch call.method {
