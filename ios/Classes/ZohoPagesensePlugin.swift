@@ -1,73 +1,16 @@
 import Flutter
 import UIKit
 import PageSenseFramework
-import ObjectiveC.runtime
 
-// MARK: - Hex → Data helper
-
-private extension String {
-    func hexToData() -> Data? {
-        let hex = self.replacingOccurrences(of: " ", with: "")
-        guard hex.count % 2 == 0 else { return nil }
-        var data = Data(capacity: hex.count / 2)
-        var index = hex.startIndex
-        while index < hex.endIndex {
-            let next = hex.index(index, offsetBy: 2)
-            guard let byte = UInt8(hex[index..<next], radix: 16) else { return nil }
-            data.append(byte)
-            index = next
-        }
-        return data
-    }
-}
-
-// MARK: - Bundle injection
-
-// After method_exchangeImplementations the "infoDictionary" selector runs our
-// code below, and "ps_infoDictionary" runs the original implementation.
-// @objc dynamic forces ObjC message dispatch so the recursive call inside
-// ps_infoDictionary correctly reaches the swapped-in original, not itself.
-extension Bundle {
-    @objc dynamic func ps_infoDictionary() -> [String: Any]? {
-        guard var dict = self.ps_infoDictionary() else { return nil }
-        if self === Bundle.main {
-            if let injected = PageSenseBundleInjector.appId {
-                dict["ZPS_APP_ID"] = injected
-            }
-        }
-        return dict
-    }
-}
-
-private enum PageSenseBundleInjector {
-    static var appId: String?
-    private static var installed = false
-    private static let lock = NSLock()
-
-    static func install(appId: String) {
-        lock.lock()
-        defer { lock.unlock() }
-        self.appId = appId
-        guard !installed else { return }
-        installed = true
-        let cls: AnyClass = Bundle.self
-        guard
-            let original    = class_getInstanceMethod(cls, NSSelectorFromString("infoDictionary")),
-            let replacement = class_getInstanceMethod(cls, #selector(Bundle.ps_infoDictionary))
-        else { return }
-        method_exchangeImplementations(original, replacement)
-    }
-}
-
-// MARK: - Plugin
-
-private let kAPNSTokenKey = "ps_apns_token"
-
+// On iOS the host app is responsible for:
+//   1. Adding ZPS_APP_ID to Info.plist
+//   2. Calling PageSense.integrate() in AppDelegate.didFinishLaunchingWithOptions
+//   3. Calling PageSense.setPushToken(deviceToken:) in
+//      AppDelegate.didRegisterForRemoteNotificationsWithDeviceToken
+//
+// This plugin therefore only bridges Dart calls for events / user / screen
+// tracking. iOS init and push token registration are no-ops here.
 public class ZohoPagesensePlugin: NSObject, FlutterPlugin {
-
-    /// True after PageSense.integrate() has been called.
-    /// AppDelegate reads this to decide whether to call PageSense.setPushToken immediately.
-    public private(set) static var isIntegrated = false
 
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(
@@ -78,10 +21,12 @@ public class ZohoPagesensePlugin: NSObject, FlutterPlugin {
         registrar.addMethodCallDelegate(instance, channel: channel)
     }
 
-
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         switch call.method {
-        case "init":            handleInit(call: call, result: result)
+        case "init":
+            // PageSense.integrate() is called by the host AppDelegate using
+            // the static ZPS_APP_ID from Info.plist.
+            result(nil)
         case "setUserId":       handleSetUserId(call: call, result: result)
         case "setUserInfo":     handleSetUserInfo(call: call, result: result)
         case "trackEvent":      handleTrackEvent(call: call, result: result)
@@ -90,56 +35,18 @@ public class ZohoPagesensePlugin: NSObject, FlutterPlugin {
         case "setTrackingEnabled", "clearAllData":
             result(nil)
         case "setPushToken":
-            handleSetPushToken(call: call, result: result)
+            // Token registration is done by the host AppDelegate with the raw
+            // APNs Data bytes. The Dart-side hex string would be lossy here.
+            result(nil)
         case "isPageSensePushNotification":
-            result(false) // handled natively in AppDelegate on iOS
+            // iOS notifications are delivered through APNs, not FCM data.
+            result(false)
         case "showPushNotification":
-            result(nil)   // handled natively in AppDelegate on iOS
+            // iOS displays notifications natively; nothing to render here.
+            result(nil)
         default:
             result(FlutterMethodNotImplemented)
         }
-    }
-
-    // MARK: - Init
-
-    private func handleInit(call: FlutterMethodCall, result: @escaping FlutterResult) {
-        guard
-            let args = call.arguments as? [String: Any],
-            let appId = args["appId"] as? String,
-            !appId.isEmpty
-        else {
-            result(FlutterError(code: "INVALID_APP_ID", message: "appId must not be empty.", details: nil))
-            return
-        }
-        // Inject appId into Bundle.main.infoDictionary so integrate() picks it up
-        // regardless of whether Info.plist contains the key.
-        PageSenseBundleInjector.install(appId: appId)
-        PageSense.integrate()
-        ZohoPagesensePlugin.isIntegrated = true
-        // Register the APNs token that AppDelegate stored before init completed.
-        if let token = UserDefaults.standard.data(forKey: kAPNSTokenKey) {
-            PageSense.setPushToken(deviceToken: token)
-        }
-        result(nil)
-    }
-
-    // MARK: - Push notifications
-
-    private func handleSetPushToken(call: FlutterMethodCall, result: @escaping FlutterResult) {
-        guard
-            let args = call.arguments as? [String: Any],
-            let tokenHex = args["token"] as? String,
-            !tokenHex.isEmpty
-        else {
-            result(FlutterError(code: "INVALID_ARGS", message: "token is required", details: nil))
-            return
-        }
-        guard let tokenData = tokenHex.hexToData() else {
-            result(FlutterError(code: "INVALID_TOKEN", message: "token must be a valid hex string", details: nil))
-            return
-        }
-        PageSense.setPushToken(deviceToken: tokenData)
-        result(nil)
     }
 
     // MARK: - User
